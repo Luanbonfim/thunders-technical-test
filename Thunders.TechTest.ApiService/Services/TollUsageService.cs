@@ -28,18 +28,16 @@ public class TollUsageService : ITollUsageService
             }
 
             var currentDate = DateTime.UtcNow;
+
             foreach (var usage in tollUsages)
             {
-                if (usage.UsageDateTime == DateTime.MinValue)
-                {
-                    return OperationResult<string>.Failure("UsageDateTime cannot be empty");
-                }
+                var validateDates = ValidateUsageDates(currentDate, usage.UsageDateTime);
 
-                if (usage.UsageDateTime > currentDate)
+                if (!validateDates.IsSuccess)
                 {
-                    return OperationResult<string>.Failure("UsageDateTime cannot be in the future");
+                    return validateDates;
                 }
-
+                
                 if (usage.Amount <= 0)
                 {
                     return OperationResult<string>.Failure("Amount must be greater than 0");
@@ -71,9 +69,11 @@ public class TollUsageService : ITollUsageService
                 return OperationResult<string>.Failure("Invalid report type");
             }
 
-            if (startDate == DateTime.MinValue || endDate == DateTime.MinValue)
+            var validateDates = ValidadeReportDates(startDate, endDate);
+
+            if (!validateDates.IsSuccess)
             {
-                return OperationResult<string>.Failure("StartDate and EndDate are required");
+                return validateDates;
             }
 
             var message = new ReportGenerationMessage
@@ -93,5 +93,42 @@ public class TollUsageService : ITollUsageService
             _logger.LogError(ex, "Error triggering report generation");
             return OperationResult<string>.Failure("Error triggering report generation");
         }
+    }
+
+    private OperationResult<string> ValidateUsageDates(DateTime currentDate, DateTime usageDate)
+    {
+        if (usageDate == DateTime.MinValue)
+        {
+            return OperationResult<string>.Failure("UsageDateTime cannot be empty");
+        }
+
+        if (usageDate > currentDate)
+        {
+            return OperationResult<string>.Failure("UsageDateTime cannot be in the future");
+        }
+
+        return OperationResult<string>.Success("Dates are valid");
+    }
+
+    private OperationResult<string> ValidadeReportDates(DateTime startDate, DateTime endDate)
+    {
+        if (startDate == DateTime.MinValue || endDate == DateTime.MinValue)
+        {
+            return OperationResult<string>.Failure("StartDate and EndDate are required");
+        }
+
+        var currentDate = DateTime.UtcNow;
+
+        if (startDate > currentDate)
+        {
+            return OperationResult<string>.Failure("StartDate cannot be in the future");
+        }
+
+        if (startDate > endDate)
+        {
+            return OperationResult<string>.Failure("StartDate cannot be greater than endDate");
+        }
+
+        return OperationResult<string>.Success("Dates are valid");
     }
 } 
