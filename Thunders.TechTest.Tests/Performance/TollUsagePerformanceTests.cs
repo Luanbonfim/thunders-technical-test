@@ -148,7 +148,6 @@ public class TollUsagePerformanceTests : IAsyncLifetime
 
             tollUsages.Add(new TollUsage
             {
-                Id = Guid.NewGuid(),
                 UsageDateTime = date,
                 TollBooth = tollBooth,
                 City = city,
