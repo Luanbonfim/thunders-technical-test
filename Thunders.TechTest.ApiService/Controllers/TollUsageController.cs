@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Thunders.TechTest.ApiService.Services;
-using Thunders.TechTest.ApiService.Middleware;
 using Asp.Versioning;
 using Thunders.TechTest.ApiService.Models.Dtos;
 
@@ -12,7 +11,6 @@ namespace Thunders.TechTest.ApiService.Controllers;
 public class TollUsageController : ControllerBase
 {
     private readonly ITollUsageService _tollUsageService;
-    private readonly ILogger<TollUsageController> _logger;
     private readonly ITimeoutService _timeoutService;
 
     public TollUsageController(
@@ -21,7 +19,6 @@ public class TollUsageController : ControllerBase
         ITimeoutService timeoutService)
     {
         _tollUsageService = tollUsageService;
-        _logger = logger;
         _timeoutService = timeoutService;
     }
 
@@ -33,6 +30,7 @@ public class TollUsageController : ControllerBase
         var result = await _timeoutService.ExecuteWithTimeoutAsync("CreateTollUsages", async (ct) =>
         {
             return await _tollUsageService.CreateTollUsageAsync(tollUsages, ct);
+
         }, cancellationToken);
 
         return Ok(result);
