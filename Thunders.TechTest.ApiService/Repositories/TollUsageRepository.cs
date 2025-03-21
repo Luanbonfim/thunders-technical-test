@@ -39,6 +39,11 @@ public class TollUsageRepository : ITollUsageRepository
                     await Task.WhenAll(tasks);
                     return true;
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating toll usages");
+                    throw;
+                }
                 finally
                 {
                     _dbContext.ChangeTracker.AutoDetectChangesEnabled = true;

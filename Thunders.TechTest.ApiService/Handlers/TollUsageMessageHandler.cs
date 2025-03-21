@@ -29,7 +29,6 @@ public class TollUsageMessageHandler : IHandleMessages<TollUsageMessage>, IHandl
         {
             var tollUsages = message.TollUsages.Select(dto => new TollUsage
             {
-                Id = dto.Id ?? Guid.NewGuid(),
                 UsageDateTime = dto.UsageDateTime,
                 TollBooth = dto.TollBooth,
                 City = dto.City,
@@ -46,51 +45,65 @@ public class TollUsageMessageHandler : IHandleMessages<TollUsageMessage>, IHandl
 
     public async Task Handle(ReportGenerationMessage message)
     {
-        await _timeoutService.ExecuteWithTimeoutAsync("HandleReportGenerationMessage", async (ct) =>
+        try
         {
-            switch (message.ReportType)
+            await _timeoutService.ExecuteWithTimeoutAsync("HandleReportGenerationMessage", async (ct) =>
             {
-                case ReportType.HourlyByCityReport:
-                    await GenerateHourlyByCityReport(message.StartDate, message.EndDate, message.GeneratedAt, ct);
-                    break;
+                switch (message.ReportType)
+                {
+                    case ReportType.HourlyByCityReport:
+                        await GenerateHourlyByCityReport(message.StartDate, message.EndDate, message.GeneratedAt, ct);
+                        break;
 
-                case ReportType.TopTollboothsReport:
-                    if (!message.Parameters.TryGetValue("tollboothsAmount", out var tollboothsAmountParameter))
-                        throw new ArgumentException("tollboothsAmount parameter is required for top tollbooths report");
+                    case ReportType.TopTollboothsReport:
+                        if (!message.Parameters.TryGetValue("tollboothsAmount", out var tollboothsAmountParameter))
+                            throw new ArgumentException("tollboothsAmount parameter is required for top tollbooths report");
 
-                    if (!int.TryParse(tollboothsAmountParameter?.ToString(), out int tollboothsAmount))
-                    {
-                        throw new ArgumentException("tollboothsAmount parameter must be a valid number");
-                    }
+                        if (!int.TryParse(tollboothsAmountParameter?.ToString(), out int tollboothsAmount))
+                        {
+                            throw new ArgumentException("tollboothsAmount parameter must be a valid number");
+                        }
 
-                    await GenerateTopTollboothsReport(
-                        tollboothsAmount, 
-                        message.StartDate, 
-                        message.GeneratedAt,
-                        ct);
-                    break;
+                        await GenerateTopTollboothsReport(
+                            tollboothsAmount, 
+                            message.StartDate, 
+                            message.GeneratedAt,
+                            ct);
+                        break;
 
-                case ReportType.VehicleTypesByTollboothReport:
-                    if (!message.Parameters.TryGetValue("tollBoothId", out var tollBoothIdParameter))
-                        throw new ArgumentException("tollBoothId parameter is required for vehicle types report");
+                    case ReportType.VehicleTypesByTollboothReport:
+                        if (!message.Parameters.TryGetValue("tollBoothId", out var tollBoothIdParameter))
+                            throw new ArgumentException("tollBoothId parameter is required for vehicle types report");
 
-                    if (!Guid.TryParse(tollBoothIdParameter?.ToString(), out Guid _))
-                    {
-                        throw new ArgumentException("tollBoothId parameter must be a valid GUID");
-                    }
+                        if (!Guid.TryParse(tollBoothIdParameter?.ToString(), out Guid _))
+                        {
+                            throw new ArgumentException("tollBoothId parameter must be a valid GUID");
+                        }
 
-                    await GenerateVehicleTypesByTollboothReport(
-                        tollBoothIdParameter.ToString()!,
-                        message.StartDate, 
-                        message.EndDate,
-                        message.GeneratedAt,
-                        ct);
-                    break;
-            }
-            
-            _logger.LogInformation("Generated report(s) at: {GeneratedAt}", message.GeneratedAt);
-            return true;
-        }, CancellationToken.None);
+                        await GenerateVehicleTypesByTollboothReport(
+                            tollBoothIdParameter.ToString()!,
+                            message.StartDate, 
+                            message.EndDate,
+                            message.GeneratedAt,
+                            ct);
+                        break;
+                }
+                
+                _logger.LogInformation("Generated report(s) at: {GeneratedAt}", message.GeneratedAt);
+                return true;
+            }, CancellationToken.None);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Invalid argument in report generation message with type: {ReportType}. Details: {Message}", 
+                message.ReportType, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while generating report of type: {ReportType}", message.ReportType);
+            throw new InvalidOperationException("An unexpected error occurred while generating the report", ex);
+        }
     }
 
     private async Task GenerateHourlyByCityReport(DateTime startDate, DateTime endDate, DateTime generatedAt, CancellationToken cancellationToken)
