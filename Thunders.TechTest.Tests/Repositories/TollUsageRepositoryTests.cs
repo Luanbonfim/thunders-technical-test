@@ -36,9 +36,9 @@ public class TollUsageRepositoryTests : IAsyncLifetime
         _timeoutServiceMock
             .Setup(x => x.ExecuteWithTimeoutAsync(
                 It.IsAny<string>(),
-                It.IsAny<Func<CancellationToken, Task<Dictionary<string, decimal>>>>(),
+                It.IsAny<Func<CancellationToken, Task<Dictionary<string, List<(DateTime Hour, decimal Total)>>>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns((string name, Func<CancellationToken, Task<Dictionary<string, decimal>>> operation, CancellationToken ct) => operation(ct));
+            .Returns((string name, Func<CancellationToken, Task<Dictionary<string, List<(DateTime Hour, decimal Total)>>>> operation, CancellationToken ct) => operation(ct));
 
         _timeoutServiceMock
             .Setup(x => x.ExecuteWithTimeoutAsync(
@@ -125,7 +125,18 @@ public class TollUsageRepositoryTests : IAsyncLifetime
         // Assert
         Assert.NotNull(result);
         Assert.NotEmpty(result);
-        Assert.All(result, kvp => Assert.True(kvp.Value > 0));
+        
+        // Verify each city has hourly totals
+        foreach (var cityData in result)
+        {
+            Assert.NotEmpty(cityData.Value);
+            
+            // Verify each hour has a positive total
+            foreach (var hourlyData in cityData.Value)
+            {
+                Assert.True(hourlyData.Total > 0, $"Total for {cityData.Key} at {hourlyData.Hour} should be positive");
+            }
+        }
     }
 
     [Fact]

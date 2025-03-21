@@ -54,7 +54,7 @@ public class TollUsageRepository : ITollUsageRepository
         await _dbContext.SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
     }
 
-    public async Task<Dictionary<string, decimal>> GetHourlyTotalByCityAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
+    public async Task<Dictionary<string, List<(DateTime Hour, decimal Total)>>> GetHourlyTotalByCityAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken)
     {
         return await _timeoutService.ExecuteWithTimeoutAsync(
             "GetHourlyTotalByCity",
@@ -68,8 +68,7 @@ public class TollUsageRepository : ITollUsageRepository
                     .Select(g => new
                     {
                         g.Key.City,
-                        g.Key.Date,
-                        g.Key.Hour,
+                        Hour = new DateTime(g.Key.Date.Year, g.Key.Date.Month, g.Key.Date.Day, g.Key.Hour, 0, 0),
                         Total = g.Sum(t => t.Amount)
                     })
                     .ToListAsync(ct);
@@ -78,7 +77,7 @@ public class TollUsageRepository : ITollUsageRepository
                     .GroupBy(x => x.City)
                     .ToDictionary(
                         g => g.Key,
-                        g => g.Sum(x => x.Total)
+                        g => g.Select(x => (x.Hour, x.Total)).ToList()
                     );
             },
             cancellationToken);
