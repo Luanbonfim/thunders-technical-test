@@ -16,6 +16,8 @@ public class TollUsageDbContext : DbContext
         modelBuilder.Entity<TollUsage>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd();
             entity.Property(e => e.TollBooth).IsRequired();
             entity.Property(e => e.City).IsRequired();
             entity.Property(e => e.State).IsRequired();

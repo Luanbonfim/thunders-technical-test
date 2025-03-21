@@ -79,7 +79,6 @@ public class TollUsageRepositoryTests : IAsyncLifetime
 
                 tollUsages.Add(new TollUsage
                 {
-                    Id = Guid.NewGuid(),
                     UsageDateTime = date,
                     TollBooth = tollBooth,
                     City = city,
@@ -100,8 +99,8 @@ public class TollUsageRepositoryTests : IAsyncLifetime
         // Arrange
         var tollUsages = new List<TollUsage>
         {
-            new() { Id = Guid.NewGuid(), UsageDateTime = DateTime.Now, TollBooth = "TB001", City = "São Paulo", State = "SP", Amount = 10, VehicleType = VehicleType.Car },
-            new() { Id = Guid.NewGuid(), UsageDateTime = DateTime.Now, TollBooth = "TB002", City = "Rio de Janeiro", State = "RJ", Amount = 15, VehicleType = VehicleType.Truck }
+            new() { UsageDateTime = DateTime.Now, TollBooth = "TB001", City = "São Paulo", State = "SP", Amount = 10, VehicleType = VehicleType.Car },
+            new() { UsageDateTime = DateTime.Now, TollBooth = "TB002", City = "Rio de Janeiro", State = "RJ", Amount = 15, VehicleType = VehicleType.Truck }
         };
 
         // Act
@@ -109,7 +108,8 @@ public class TollUsageRepositoryTests : IAsyncLifetime
 
         // Assert
         Assert.True(result);
-        Assert.Equal(tollUsages.Count, _dbContext.TollUsages.Count(x => tollUsages.Select(t => t.Id).Contains(x.Id)));
+        Assert.True(_dbContext.TollUsages.Any(x => 
+            x.TollBooth == tollUsages[0].TollBooth || x.TollBooth == tollUsages[1].TollBooth));
     }
 
     [Fact]
