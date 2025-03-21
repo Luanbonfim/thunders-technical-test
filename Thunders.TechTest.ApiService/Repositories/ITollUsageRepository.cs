@@ -8,7 +8,7 @@ namespace Thunders.TechTest.ApiService.Repositories;
 public interface ITollUsageRepository
 {
     Task<bool> CreateAsync(List<TollUsage> tollUsages, CancellationToken cancellationToken);
-    Task<Dictionary<string, decimal>> GetHourlyTotalByCityAsync(
+    Task<Dictionary<string, List<(DateTime Hour, decimal Total)>>> GetHourlyTotalByCityAsync(
         DateTime startDate, 
         DateTime endDate, 
         CancellationToken cancellationToken);
