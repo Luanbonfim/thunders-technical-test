@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Thunders.TechTest.ApiService.Data;
 using Thunders.TechTest.ApiService.Messages;
 using Thunders.TechTest.ApiService.Models;
+using Thunders.TechTest.ApiService.Services;
 using Thunders.TechTest.ApiService.Middleware;
 
 namespace Thunders.TechTest.ApiService.Repositories;
