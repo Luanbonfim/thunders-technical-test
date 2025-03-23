@@ -15,7 +15,6 @@ public class TollUsageController : ControllerBase
 
     public TollUsageController(
         ITollUsageService tollUsageService,
-        ILogger<TollUsageController> logger,
         ITimeoutService timeoutService)
     {
         _tollUsageService = tollUsageService;
