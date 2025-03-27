@@ -6,6 +6,7 @@ using Thunders.TechTest.ApiService.Data;
 using Thunders.TechTest.ApiService.Models;
 using Thunders.TechTest.ApiService.Repositories;
 using Thunders.TechTest.ApiService.Services;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Thunders.TechTest.Tests.Repositories;
 
@@ -20,6 +21,7 @@ public class TollUsageRepositoryTests : IAsyncLifetime
     {
         var options = new DbContextOptionsBuilder<TollUsageDbContext>()
             .UseInMemoryDatabase($"TollUsageDb_{Guid.NewGuid()}")
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _dbContext = new TollUsageDbContext(options);
