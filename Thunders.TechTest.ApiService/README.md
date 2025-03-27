@@ -14,7 +14,7 @@ Este serviço é responsável por gerenciar os dados de utilização das praças
    - `ConnectionStrings__ThundersTechTestDb`: String de conexão com o banco de dados SQL Server
    - `ConnectionStrings__RabbitMq`: URL de conexão com o RabbitMQ
 
-2. Configure as features no arquivo `appsettings.json`:
+2. Configure as features e timeouts no arquivo `appsettings.json`:
    ```json
    {
      "Features": {
@@ -27,9 +27,33 @@ Este serviço é responsável por gerenciar os dados de utilização das praças
      "EnvironmentVariables": {
        "DatabaseConnection": "ConnectionStrings__ThundersTechTestDb",
        "RabbitMqConnection": "ConnectionStrings__RabbitMq"
+     },
+     "ApiSettings": {
+       "TimeoutInSeconds": 10
      }
    }
    ```
+
+3. Para ambiente de desenvolvimento, configure timeouts diferentes em `appsettings.Development.json`:
+   ```json
+   {
+     "ApiSettings": {
+       "TimeoutInSeconds": 30
+     }
+   }
+   ```
+
+## Timeouts
+
+O serviço implementa um mecanismo de timeout para todas as requisições HTTP:
+
+- Em produção: 10 segundos (configurável via `ApiSettings:TimeoutInSeconds`)
+- Em desenvolvimento: 30 segundos (configurável via `appsettings.Development.json`)
+
+Quando uma requisição excede o tempo limite:
+- A requisição é automaticamente cancelada
+- O serviço retorna um status code 408 (Request Timeout)
+- A resposta inclui a mensagem "Request timeout"
 
 ## Endpoints
 
@@ -66,6 +90,10 @@ Recebe dados de utilização de pedágio.
     "data": null,
     "message": "Error creating toll usage"
   }
+  ```
+- 408 Request Timeout: Requisição excedeu o tempo limite
+  ```json
+  "Request timeout"
   ```
 
 ### POST /api/v1.0/toll-usage/generate-report
@@ -114,6 +142,11 @@ Aciona a geração de relatórios. O serviço valida se o tipo de relatório é 
     "message": "StartDate is required"
   }
   ```
+- 408 Request Timeout: Requisição excedeu o tempo limite
+  ```json
+  "Request timeout"
+  ```
+
 ## Arquitetura
 
 O serviço utiliza uma arquitetura baseada em mensageria para processamento assíncrono dos dados:
