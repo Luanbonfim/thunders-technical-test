@@ -87,8 +87,25 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.Use(async (context, next) =>
+{
+    int timeoutSeconds = builder.Configuration.GetValue<int>("ApiSettings:TimeoutInSeconds");
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds)); // Set timeout
+    context.RequestAborted = cts.Token; // Assign cancellation token
+
+    try
+    {
+        await next(context); // Process request
+    }
+    catch (OperationCanceledException)
+    {
+        context.Response.StatusCode = StatusCodes.Status408RequestTimeout; // 408 Timeout
+    }
+});
+
 app.UseHttpsRedirection();
 app.UseAuthorization();
+
 
 // Use exception handling middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
