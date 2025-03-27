@@ -39,7 +39,6 @@ Este serviço é responsável por gerenciar os dados de utilização das praças
 O serviço implementa um mecanismo de timeout para todas as requisições HTTP:
 
 - Em produção: 10 segundos (configurável via `ApiSettings:TimeoutInSeconds`)
-- Em desenvolvimento: 30 segundos (configurável via `appsettings.Development.json`)
 
 Quando uma requisição excede o tempo limite:
 - A requisição é automaticamente cancelada
