@@ -32,16 +32,22 @@ public class TollUsageRepository : ITollUsageRepository
                 _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
                 _dbContext.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
 
+                using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+
                 try
                 {
                     var batches = tollUsages.Chunk(BATCH_SIZE);
                     var tasks = batches.Select(batch => ProcessBatchAsync(batch, ct));
                     await Task.WhenAll(tasks);
+
+                    await transaction.CommitAsync(ct);
+
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error creating toll usages");
+                    await transaction.RollbackAsync(ct);
+                    _logger.LogError(ex, "Error creating toll usages, transaction rolled back");
                     throw;
                 }
                 finally
@@ -145,7 +151,7 @@ public class TollUsageRepository : ITollUsageRepository
             "SaveReport",
             async (ct) =>
             {
-                _logger.LogInformation("Saving report of type {ReportType} generated at {GeneratedAt}", 
+                _logger.LogInformation("Saving report of type {ReportType} generated at {GeneratedAt}",
                     reportType, generatedAt);
 
                 // Implementar lógica de persistência do relatório
@@ -155,4 +161,4 @@ public class TollUsageRepository : ITollUsageRepository
             },
             cancellationToken);
     }
-} 
+}
