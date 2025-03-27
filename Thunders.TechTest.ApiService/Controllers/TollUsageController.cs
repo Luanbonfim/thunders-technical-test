@@ -28,7 +28,7 @@ public class TollUsageController : ControllerBase
             var result = await _tollUsageService.CreateTollUsageAsync(tollUsages, cancellationToken);
 
             if (!result.IsSuccess)
-                return StatusCode(500, result);
+                return BadRequest(result);
 
             return Ok(result);
         }
@@ -54,7 +54,7 @@ public class TollUsageController : ControllerBase
                 cancellationToken);
 
             if (!result.IsSuccess)
-                return StatusCode(500, result);
+                return BadRequest(result);
 
             return Ok(result);
         }
