@@ -34,15 +34,6 @@ Este serviço é responsável por gerenciar os dados de utilização das praças
    }
    ```
 
-3. Para ambiente de desenvolvimento, configure timeouts diferentes em `appsettings.Development.json`:
-   ```json
-   {
-     "ApiSettings": {
-       "TimeoutInSeconds": 30
-     }
-   }
-   ```
-
 ## Timeouts
 
 O serviço implementa um mecanismo de timeout para todas as requisições HTTP:
