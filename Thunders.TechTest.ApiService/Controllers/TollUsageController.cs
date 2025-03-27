@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Thunders.TechTest.ApiService.Services;
 using Asp.Versioning;
 using Thunders.TechTest.ApiService.Models.Dtos;
+using Microsoft.AspNetCore.Http.Timeouts;
 
 namespace Thunders.TechTest.ApiService.Controllers;
 
@@ -11,14 +12,10 @@ namespace Thunders.TechTest.ApiService.Controllers;
 public class TollUsageController : ControllerBase
 {
     private readonly ITollUsageService _tollUsageService;
-    private readonly ITimeoutService _timeoutService;
 
-    public TollUsageController(
-        ITollUsageService tollUsageService,
-        ITimeoutService timeoutService)
+    public TollUsageController(ITollUsageService tollUsageService)
     {
         _tollUsageService = tollUsageService;
-        _timeoutService = timeoutService;
     }
 
     [HttpPost]
@@ -26,13 +23,20 @@ public class TollUsageController : ControllerBase
         [FromBody] List<TollUsageDto> tollUsages,
         CancellationToken cancellationToken)
     {
-        var result = await _timeoutService.ExecuteWithTimeoutAsync("CreateTollUsages", async (ct) =>
+        try 
         {
-            return await _tollUsageService.CreateTollUsageAsync(tollUsages, ct);
+            var result = await _tollUsageService.CreateTollUsageAsync(tollUsages, cancellationToken);
 
-        }, cancellationToken);
+            if (!result.IsSuccess)
+                return StatusCode(500, result);
 
-        return Ok(result);
+            return Ok(result);
+        }
+
+        catch (OperationCanceledException)
+        {
+            return StatusCode(408, "Request timeout");
+        }
     }
 
     [HttpPost("generate-report")]
@@ -40,11 +44,23 @@ public class TollUsageController : ControllerBase
         [FromBody] ReportGenerationRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await _timeoutService.ExecuteWithTimeoutAsync("GenerateReport", async (ct) =>
+        try
         {
-            return await _tollUsageService.TriggerReportGenerationAsync(request.StartDate, request.EndDate, request.ReportType, request.Parameters, ct);
-        }, cancellationToken);
+            var result = await _tollUsageService.TriggerReportGenerationAsync(
+                request.StartDate, 
+                request.EndDate, 
+                request.ReportType, 
+                request.Parameters, 
+                cancellationToken);
 
-        return Ok(result);
+            if (!result.IsSuccess)
+                return StatusCode(500, result);
+
+            return Ok(result);
+        }
+        catch (OperationCanceledException)
+        {
+            return StatusCode(408, "Request timeout");
+        }
     }
 } 
